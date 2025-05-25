@@ -1,7 +1,7 @@
 # main.py
 # Student Name: Xingzuo Li
 # Student Number: 2295275
-# GitHub Username: yourGitHubUsername
+# GitHub Username: DanielCrane292
 
 import sys
 import json

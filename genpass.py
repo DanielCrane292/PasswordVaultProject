@@ -1,7 +1,7 @@
 # genpass.py
-# Author: Daniel
-# Student Number: 123456789
-# GitHub Username: yourGitHubUsername
+# Student Name: Xingzuo Li
+# Student Number: 2295275
+# GitHub Username: DanielCrane292
 
 import random
 import string
