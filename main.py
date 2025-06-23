@@ -2,241 +2,217 @@
 # Student Name: Xingzuo Li
 # Student Number: 2295275
 # GitHub Username: DanielCrane292
-
 import sys
-import json
-import base64
-import os
 from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QListWidget, QPushButton, QVBoxLayout,
-    QHBoxLayout, QWidget, QMessageBox, QListWidgetItem, QDialog, QFormLayout,
-    QLineEdit, QDialogButtonBox, QLabel, QSlider, QCheckBox
+    QApplication, QMainWindow, QPushButton, QVBoxLayout,
+    QWidget, QDialog, QLabel, QHBoxLayout, QMenuBar, QMenu,
+    QLineEdit, QComboBox
 )
-from PyQt6.QtCore import Qt
-from genpass import generate_password
 
-def encrypt(data: str) -> bytes:
-    return base64.b64encode(data.encode())
+from PyQt6.QtGui import QAction
 
-def decrypt(data: bytes) -> str:
-    return base64.b64decode(data).decode()
 
-class PasswordGeneratorDialog(QDialog):
+# Dialog for Unit Converter
+class UnitConverterDialog(QDialog):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Password Generator")
-        self.setFixedSize(400, 300)
+        self.setWindowTitle("Unit Converter")
 
+        # Input label and field
+        self.input_label = QLabel("Enter value:")
+        self.input_field = QLineEdit()
+
+        # From unit
+        self.from_label = QLabel("From:")
+        self.from_combo = QComboBox()
+        self.from_combo.addItems(["Meters", "Feet", "Celsius", "Fahrenheit"])
+
+        # To unit
+        self.to_label = QLabel("To:")
+        self.to_combo = QComboBox()
+        self.to_combo.addItems(["Meters", "Feet", "Celsius", "Fahrenheit"])
+
+        # Convert button
+        self.convert_button = QPushButton("Convert")
+        self.convert_button.clicked.connect(self.convert_units)
+
+        # Result display
+        self.result_label = QLabel("Result: ")
+        self.result_value = QLabel("")
+
+        # Layouts
+        layout = QVBoxLayout()
+        layout.addWidget(self.input_label)
+        layout.addWidget(self.input_field)
+
+        layout.addWidget(self.from_label)
+        layout.addWidget(self.from_combo)
+
+        layout.addWidget(self.to_label)
+        layout.addWidget(self.to_combo)
+
+        layout.addWidget(self.convert_button)
+        layout.addWidget(self.result_label)
+        layout.addWidget(self.result_value)
+
+        self.setLayout(layout)
+
+    def convert_units(self):
+        try:
+            value = float(self.input_field.text())
+            from_unit = self.from_combo.currentText()
+            to_unit = self.to_combo.currentText()
+
+            # Conversion logic
+            if from_unit == to_unit:
+                result = value
+            elif from_unit == "Meters" and to_unit == "Feet":
+                result = value * 3.28084
+            elif from_unit == "Feet" and to_unit == "Meters":
+                result = value / 3.28084
+            elif from_unit == "Celsius" and to_unit == "Fahrenheit":
+                result = (value * 9/5) + 32
+            elif from_unit == "Fahrenheit" and to_unit == "Celsius":
+                result = (value - 32) * 5/9
+            else:
+                result = "Invalid conversion"
+
+            self.result_value.setText(f"{result}")
+        except ValueError:
+            self.result_value.setText("Invalid input")
+
+
+# Dialog for Calculator
+from PyQt6.QtWidgets import (
+    QDialog, QLabel, QVBoxLayout, QLineEdit, QComboBox, QPushButton
+)
+
+class CalculatorDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Calculator")
+
+        # Input fields
+        self.num1_label = QLabel("Number 1:")
+        self.num1_input = QLineEdit()
+
+        self.num2_label = QLabel("Number 2:")
+        self.num2_input = QLineEdit()
+
+        # Operator selection
+        self.operator_label = QLabel("Operator:")
+        self.operator_combo = QComboBox()
+        self.operator_combo.addItems(["+", "-", "*", "/"])
+
+        # Calculate button
+        self.calc_button = QPushButton("Calculate")
+        self.calc_button.clicked.connect(self.calculate_result)
+
+        # Result display
+        self.result_label = QLabel("Result: ")
+        self.result_value = QLabel("")
+
+        # Layout
+        layout = QVBoxLayout()
+        layout.addWidget(self.num1_label)
+        layout.addWidget(self.num1_input)
+        layout.addWidget(self.num2_label)
+        layout.addWidget(self.num2_input)
+        layout.addWidget(self.operator_label)
+        layout.addWidget(self.operator_combo)
+        layout.addWidget(self.calc_button)
+        layout.addWidget(self.result_label)
+        layout.addWidget(self.result_value)
+
+        self.setLayout(layout)
+
+    def calculate_result(self):
+        try:
+            num1 = float(self.num1_input.text())
+            num2 = float(self.num2_input.text())
+            operator = self.operator_combo.currentText()
+
+            if operator == "+":
+                result = num1 + num2
+            elif operator == "-":
+                result = num1 - num2
+            elif operator == "*":
+                result = num1 * num2
+            elif operator == "/":
+                if num2 == 0:
+                    self.result_value.setText("Cannot divide by zero")
+                    return
+                result = num1 / num2
+            else:
+                result = "Invalid operator"
+
+            self.result_value.setText(str(result))
+
+        except ValueError:
+            self.result_value.setText("Invalid input")
+
+
+
+# Main Application Window
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowTitle("Utility App - Unit Converter & Calculator")
+
+        # Create menu bar
+        menu_bar = self.menuBar()
+
+        file_menu = menu_bar.addMenu("File")
+        tools_menu = menu_bar.addMenu("Tools")
+        help_menu = menu_bar.addMenu("Help")
+
+        # Create actions
+        open_converter_action = QAction("Open Unit Converter", self)
+        open_converter_action.setShortcut("Ctrl+U")
+        open_converter_action.triggered.connect(self.open_unit_converter)
+
+        open_calculator_action = QAction("Open Calculator", self)
+        open_calculator_action.setShortcut("Ctrl+C")
+        open_calculator_action.triggered.connect(self.open_calculator)
+
+        exit_action = QAction("Exit", self)
+        exit_action.setShortcut("Ctrl+Q")
+        exit_action.triggered.connect(self.close)
+
+        # Add actions to menus
+        tools_menu.addAction(open_converter_action)
+        tools_menu.addAction(open_calculator_action)
+        file_menu.addAction(exit_action)
+
+        # Central widget with buttons
+        central_widget = QWidget()
         layout = QVBoxLayout()
 
-        self.length_label = QLabel("Password Length: 12")
-        layout.addWidget(self.length_label)
+        btn_converter = QPushButton("Open Unit Converter")
+        btn_converter.clicked.connect(self.open_unit_converter)
 
-        self.length_slider = QSlider(Qt.Orientation.Horizontal)
-        self.length_slider.setMinimum(8)
-        self.length_slider.setMaximum(64)
-        self.length_slider.setValue(12)
-        self.length_slider.valueChanged.connect(self.update_length_label)
-        layout.addWidget(self.length_slider)
+        btn_calculator = QPushButton("Open Calculator")
+        btn_calculator.clicked.connect(self.open_calculator)
 
-        self.lowercase_checkbox = QCheckBox("Include Lowercase")
-        self.lowercase_checkbox.setChecked(True)
-        layout.addWidget(self.lowercase_checkbox)
+        layout.addWidget(btn_converter)
+        layout.addWidget(btn_calculator)
 
-        self.uppercase_checkbox = QCheckBox("Include Uppercase")
-        self.uppercase_checkbox.setChecked(True)
-        layout.addWidget(self.uppercase_checkbox)
+        central_widget.setLayout(layout)
+        self.setCentralWidget(central_widget)
 
-        self.digits_checkbox = QCheckBox("Include Digits")
-        self.digits_checkbox.setChecked(True)
-        layout.addWidget(self.digits_checkbox)
+    def open_unit_converter(self):
+        dialog = UnitConverterDialog()
+        dialog.exec()
 
-        self.symbols_checkbox = QCheckBox("Include Symbols")
-        self.symbols_checkbox.setChecked(True)
-        layout.addWidget(self.symbols_checkbox)
+    def open_calculator(self):
+        dialog = CalculatorDialog()
+        dialog.exec()
 
-        self.result_label = QLabel("")
-        layout.addWidget(self.result_label)
 
-        generate_button = QPushButton("Generate")
-        generate_button.clicked.connect(self.generate)
-        layout.addWidget(generate_button)
-
-        use_button = QPushButton("Use This Password")
-        use_button.clicked.connect(self.accept)
-        layout.addWidget(use_button)
-
-        self.setLayout(layout)
-        self.generated_password = ""
-
-    def update_length_label(self, value):
-        self.length_label.setText(f"Password Length: {value}")
-
-    def generate(self):
-        length = self.length_slider.value()
-        lower = self.lowercase_checkbox.isChecked()
-        upper = self.uppercase_checkbox.isChecked()
-        digits = self.digits_checkbox.isChecked()
-        symbols = self.symbols_checkbox.isChecked()
-
-        if not (lower or upper or digits or symbols):
-            QMessageBox.warning(self, "Warning", "At least one character type must be selected.")
-            return
-
-        self.generated_password = generate_password(length, lower, upper, digits, symbols)
-        self.result_label.setText(self.generated_password)
-
-    def get_password(self):
-        return self.generated_password
-
-class EntryDialog(QDialog):
-    def __init__(self, email="", password=""):
-        super().__init__()
-        self.setWindowTitle("Entry")
-        self.setFixedSize(300, 200)
-
-        layout = QFormLayout()
-
-        self.email_input = QLineEdit()
-        self.email_input.setText(email)
-        layout.addRow("Email:", self.email_input)
-
-        password_layout = QHBoxLayout()
-        self.password_input = QLineEdit()
-        self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
-        self.password_input.setText(password)
-        password_layout.addWidget(self.password_input)
-
-        self.generate_button = QPushButton("Generate")
-        self.generate_button.clicked.connect(self.open_generator)
-        password_layout.addWidget(self.generate_button)
-
-        layout.addRow("Password:", password_layout)
-
-        buttons = QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        self.button_box = QDialogButtonBox(buttons)
-        self.button_box.accepted.connect(self.accept)
-        self.button_box.rejected.connect(self.reject)
-        layout.addRow(self.button_box)
-
-        self.setLayout(layout)
-
-    def open_generator(self):
-        dialog = PasswordGeneratorDialog()
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            generated = dialog.get_password()
-            if generated:
-                self.password_input.setText(generated)
-
-    def get_data(self):
-        return self.email_input.text().strip(), self.password_input.text().strip()
-
-class PasswordVaultApp(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Secure Password Vault")
-        self.setGeometry(100, 100, 600, 400)
-
-        main_layout = QHBoxLayout()
-
-        self.credential_list = QListWidget()
-        main_layout.addWidget(self.credential_list)
-
-        button_layout = QVBoxLayout()
-
-        self.add_button = QPushButton("Add")
-        self.add_button.clicked.connect(self.add_entry)
-        button_layout.addWidget(self.add_button)
-
-        self.edit_button = QPushButton("Edit")
-        self.edit_button.clicked.connect(self.edit_entry)
-        button_layout.addWidget(self.edit_button)
-
-        self.delete_button = QPushButton("Delete")
-        self.delete_button.clicked.connect(self.delete_entry)
-        button_layout.addWidget(self.delete_button)
-
-        button_layout.addStretch()
-        main_layout.addLayout(button_layout)
-
-        container = QWidget()
-        container.setLayout(main_layout)
-        self.setCentralWidget(container)
-
-        self.credentials = []
-        self.load_vault()
-
-    def add_entry(self):
-        dialog = EntryDialog()
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            email, password = dialog.get_data()
-            if not email or not password:
-                QMessageBox.warning(self, "Warning", "Both email and password are required.")
-                return
-            self.credentials.append({'email': email, 'password': password})
-            self.refresh_list()
-
-    def edit_entry(self):
-        selected = self.credential_list.currentRow()
-        if selected < 0:
-            QMessageBox.warning(self, "Warning", "Please select an entry to edit.")
-            return
-        entry = self.credentials[selected]
-        dialog = EntryDialog(entry['email'], entry['password'])
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            email, password = dialog.get_data()
-            if not email or not password:
-                QMessageBox.warning(self, "Warning", "Both email and password are required.")
-                return
-            self.credentials[selected] = {'email': email, 'password': password}
-            self.refresh_list()
-
-    def delete_entry(self):
-        selected = self.credential_list.currentRow()
-        if selected < 0:
-            QMessageBox.warning(self, "Warning", "Please select an entry to delete.")
-            return
-        reply = QMessageBox.question(self, "Delete Entry", "Are you sure you want to delete this entry?",
-                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-        if reply == QMessageBox.StandardButton.Yes:
-            del self.credentials[selected]
-            self.refresh_list()
-
-    def load_vault(self):
-        self.credentials.clear()
-        if not os.path.exists("vault.enc"):
-            return
-        try:
-            with open("vault.enc", "rb") as file:
-                encrypted_data = file.read()
-                decrypted_data = decrypt(encrypted_data)
-                self.credentials = json.loads(decrypted_data)
-                self.refresh_list()
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to load vault: {str(e)}")
-
-    def save_vault(self):
-        try:
-            data = json.dumps(self.credentials)
-            encrypted_data = encrypt(data)
-            with open("vault.enc", "wb") as file:
-                file.write(encrypted_data)
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to save vault: {str(e)}")
-
-    def refresh_list(self):
-        self.credential_list.clear()
-        for entry in sorted(self.credentials, key=lambda x: x['email'].lower()):
-            masked = '*' * len(entry['password'])
-            item = QListWidgetItem(f"{entry['email']} | {masked}")
-            self.credential_list.addItem(item)
-
-    def closeEvent(self, event):
-        self.save_vault()
-        event.accept()
-
+# Entry point
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = PasswordVaultApp()
+    window = MainWindow()
     window.show()
     sys.exit(app.exec())
